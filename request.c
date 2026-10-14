@@ -24,9 +24,19 @@ int parseRequestLine(char *buffer, size_t n, Request *req) {
   int count = 0;
 
   while (token != NULL) {
+    if (count >= 3)
+      return -1;
+
+    if (strlen(token) >= sizeof(lineArray[count]))
+      return -1;
+
     strcpy(lineArray[count++], token);
     token = strtok(NULL, " ");
   }
+
+  if (count != 3)
+    return -1;
+
   strcpy(req->method, lineArray[0]);
   strcpy(req->path, lineArray[1]);
   strcpy(req->version, lineArray[2]);
@@ -42,6 +52,11 @@ int parseRequestHeaders(char *buffer, size_t n, Request *req) {
     return -1;
 
   resLine += 2;
+
+  if (strncmp(resLine, "\r\n", 2) == 0) {
+    req->headers[0] = '\0';
+    return 0;
+  }
 
   size_t remaining = n - (size_t)(resLine - buffer);
   char *endLine = memmem(resLine, remaining, "\r\n\r\n", 4);
@@ -59,6 +74,11 @@ int parseRequestHeaders(char *buffer, size_t n, Request *req) {
 
   char *token = strtok(headerBuffer, "\r\n");
   while (token != NULL) {
+
+    if (strchr(token, ':') == NULL) {
+      return -1;
+    }
+
     strcat(req->headers, token);
     strcat(req->headers, "\n");
     token = strtok(NULL, "\r\n");
