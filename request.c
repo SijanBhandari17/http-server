@@ -6,8 +6,8 @@
 
 int parseRequestLine(char *buffer, size_t n, Request *req) {
 
-  char resLineBuffer[30];
-  char lineArray[3][30];
+  char resLineBuffer[2100];
+  char lineArray[3][2100];
 
   char *resLine = memmem(buffer, n, "\r\n", 2);
   if (resLine == NULL)
@@ -37,6 +37,10 @@ int parseRequestLine(char *buffer, size_t n, Request *req) {
   if (count != 3)
     return -1;
 
+  if (strlen(lineArray[0]) >= sizeof(req->method) ||
+      strlen(lineArray[1]) >= sizeof(req->path) ||
+      strlen(lineArray[2]) >= sizeof(req->version))
+    return -1;
   strcpy(req->method, lineArray[0]);
   strcpy(req->path, lineArray[1]);
   strcpy(req->version, lineArray[2]);
@@ -46,7 +50,7 @@ int parseRequestLine(char *buffer, size_t n, Request *req) {
 
 int parseRequestHeaders(char *buffer, size_t n, Request *req) {
 
-  char headerBuffer[200];
+  char headerBuffer[8192];
   char *resLine = memmem(buffer, n, "\r\n", 2);
   if (resLine == NULL)
     return -1;
@@ -87,18 +91,17 @@ int parseRequestHeaders(char *buffer, size_t n, Request *req) {
   return 0;
 }
 
-int parseRequest(int sockfd, int flags) {
-  Request req = {0};
-  char buffer[1024];
+int parseRequest(int sockfd, int flags, Request *req) {
+  char buffer[MAX_REQUEST_BYTES];
 
   ssize_t n = recv(sockfd, buffer, sizeof(buffer), flags);
   if (n > 0) {
     char *res = memmem(buffer, (size_t)n, "\r\n\r\n", 4);
     if (res == NULL)
       return -1;
-    if (parseRequestLine(buffer, n, &req) == -1)
+    if (parseRequestLine(buffer, n, req) == -1)
       return -1;
-    if (parseRequestHeaders(buffer, n, &req) == -1)
+    if (parseRequestHeaders(buffer, n, req) == -1)
       return -1;
   }
   return 0;

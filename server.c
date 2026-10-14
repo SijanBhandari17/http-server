@@ -81,7 +81,8 @@ int main() {
     if (new_fd == -1)
       continue;
 
-    parseRequest(new_fd, 0);
+    Request req = {0};
+    parseRequest(new_fd, 0, &req);
 
     char *msg = "Hello, this is server";
     sendAll(new_fd, msg, strlen(msg), 0);
