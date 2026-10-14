@@ -58,6 +58,8 @@ void acceptConnection(struct sockaddr_storage addr, int listener) {
     } else {
       const Response *res =
           match_routes(routes, req.method, req.path, route_count);
+      printf("Method: %s | Path: %s\n", req.method, req.path);
+      printf("Selected response: %s", res->status_line);
       sendHttpResponse(new_fd, res);
     };
 
