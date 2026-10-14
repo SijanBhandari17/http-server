@@ -10,6 +10,8 @@ typedef struct {
 
 extern const Response bad_req;
 extern const Response not_found;
+extern const Response hello_response;
+extern const Response index_response;
 
 int sendResponse(int fd, const char *msg, size_t len, int flag);
 int sendHttpResponse(int fd, const Response *res);

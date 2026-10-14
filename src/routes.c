@@ -3,22 +3,8 @@
 #include "routes.h"
 #include <string.h>
 
-const Response home_response = {.status_line = "HTTP/1.1 200 OK\r\n",
-                                .headers = "Content-Type: text/plain\r\n"
-                                           "Content-Length: 9\r\n"
-                                           "Connection: close\r\n"
-                                           "\r\n",
-                                .message = "Home page"};
-
-const Response hello_response = {.status_line = "HTTP/1.1 200 OK\r\n",
-                                 .headers = "Content-Type: text/plain\r\n"
-                                            "Content-Length: 12\r\n"
-                                            "Connection: close\r\n"
-                                            "\r\n",
-                                 .message = "Hello World!"};
-
 const Routes routes[] = {
-    {.method = "GET", .path = "/home", .response = &home_response},
+    {.method = "GET", .path = "/", .response = &index_response},
     {.method = "GET", .path = "/hello", .response = &hello_response},
 };
 

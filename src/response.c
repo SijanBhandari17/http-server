@@ -6,18 +6,36 @@
 #include <sys/types.h>
 
 const Response bad_req = {.status_line = "HTTP/1.1 400 Bad Request\r\n",
-                          .headers = "Content-Type: text/plain\r\n"
+                          .headers = "Content-Type: text/html;"
+                                     "charset=UTF-8\r\n"
                                      "Content-Length: 12\r\n"
                                      "Connection: close\r\n"
                                      "\r\n",
-                          .message = "Bad Request\n"};
+                          .message = "400.html\n"};
 
 const Response not_found = {.status_line = "HTTP/1.1 404 Not Found\r\n",
-                            .headers = "Content-Type: text/plain\r\n"
+                            .headers = "Content-Type: text/html\r\n"
+                                       "charset=UTF-8\r\n"
                                        "Content-Length: 17\r\n"
                                        "Connection: close\r\n"
                                        "\r\n",
-                            .message = "Route not found \n"};
+                            .message = "404.html\n"};
+
+const Response hello_response = {.status_line = "HTTP/1.1 200 OK\r\n",
+                                 .headers = "Content-Type: text/html\r\n"
+                                            "charset=UTF-8\r\n"
+                                            "Content-Length: 12\r\n"
+                                            "Connection: close\r\n"
+                                            "\r\n",
+                                 .message = "hello.html!"};
+
+const Response index_response = {.status_line = "HTTP/1.1 200 OK\r\n",
+                                 .headers = "Content-Type: text/html\r\n"
+                                            "charset=UTF-8\r\n"
+                                            "Content-Length: 12\r\n"
+                                            "Connection: close\r\n"
+                                            "\r\n",
+                                 .message = "index.html!"};
 
 int sendResponse(int new_fd, const char *msg, size_t len, int flag) {
 

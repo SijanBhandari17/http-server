@@ -1,7 +1,6 @@
 #include "request.h"
 #include "response.h"
 #include "routes.h"
-#include <errno.h>
 #include <netdb.h>
 #include <signal.h>
 #include <stdio.h>
