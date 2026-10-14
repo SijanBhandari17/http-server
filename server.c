@@ -1,3 +1,4 @@
+#include "request.h"
 #include <netdb.h>
 #include <stdio.h>
 #include <string.h>
@@ -80,7 +81,9 @@ int main() {
     if (new_fd == -1)
       continue;
 
-    char *msg = "Hello";
+    parseRequest(new_fd, 0);
+
+    char *msg = "Hello, this is server";
     sendAll(new_fd, msg, strlen(msg), 0);
     if (close(new_fd) == -1) {
       perror("close");
