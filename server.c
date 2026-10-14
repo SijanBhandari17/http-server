@@ -1,5 +1,9 @@
 #include "request.h"
+#include "response.h"
+#include "routes.h"
+#include <errno.h>
 #include <netdb.h>
+#include <signal.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/socket.h>
@@ -35,28 +39,42 @@ int create_listener(struct addrinfo *res) {
     perror("listen");
     return -1;
   }
-
   return socketfd;
 }
 
-int sendAll(int new_fd, const char *msg, size_t len, int flag) {
+void acceptConnection(struct sockaddr_storage addr, int listener) {
 
-  size_t bytes_send = 0;
-  while (bytes_send < len) {
-    ssize_t n = send(new_fd, msg + bytes_send, len - bytes_send, flag);
-    if (n == -1) {
-      perror("send");
-      return 0;
+  while (1) {
+    socklen_t addr_size = sizeof addr;
+    int new_fd = accept(listener, (struct sockaddr *)&addr, &addr_size);
+    if (new_fd == -1) {
+      perror("accept");
+      continue;
     }
-    bytes_send += n;
+
+    Request req = {0};
+
+    if (parseRequest(new_fd, 0, &req) == -1) {
+      sendHttpResponse(new_fd, &bad_req);
+    } else {
+      const Response *res =
+          match_routes(routes, req.method, req.path, route_count);
+      sendHttpResponse(new_fd, res);
+    };
+
+    if (close(new_fd) == -1) {
+      perror("close");
+    };
   }
-  return 1;
 }
 
 int main() {
 
+  signal(SIGPIPE, SIG_IGN);
+
   int rv;
   struct addrinfo hints, *res;
+  struct sockaddr_storage addr;
 
   memset(&hints, 0, sizeof(hints));
   hints.ai_flags = AI_PASSIVE; // wildcard address
@@ -71,9 +89,6 @@ int main() {
     return 1;
   }
 
-  struct sockaddr_storage addr;
-  socklen_t addr_size = sizeof addr;
-
   int listener = -1;
   for (struct addrinfo *p = res; p != NULL; p = p->ai_next) {
     listener = create_listener(p);
@@ -86,42 +101,7 @@ int main() {
     fprintf(stderr, "failed to create listener\n");
     return 1;
   }
+  acceptConnection(addr, listener);
 
-  while (1) {
-    addr_size = sizeof addr;
-    int new_fd = accept(listener, (struct sockaddr *)&addr, &addr_size);
-    if (new_fd == -1) {
-      perror("accept");
-      continue;
-    }
-
-    Request req = {0};
-    if (parseRequest(new_fd, 0, &req) == -1) {
-
-      const char *resp = "HTTP/1.1 400 Bad Request\r\n"
-                         "Content-Type: text/plain\r\n"
-                         "Content-Length: 12\r\n"
-                         "Connection: close\r\n"
-                         "\r\n"
-                         "Bad Request\n";
-      sendAll(new_fd, resp, strlen(resp), 0);
-    } else {
-      const char *body = "Hello, this is server\n";
-      char header[1024];
-      int hlen = snprintf(header, sizeof header,
-                          "HTTP/1.1 200 OK\r\n"
-                          "Content-Type: text/plain\r\n"
-                          "Content-Length: %zu\r\n"
-                          "Connection: close\r\n"
-                          "\r\n",
-                          strlen(body));
-      sendAll(new_fd, header, (size_t)hlen, 0);
-      sendAll(new_fd, body, strlen(body), 0);
-    };
-
-    if (close(new_fd) == -1) {
-      perror("close");
-    };
-  }
   close(listener);
 }

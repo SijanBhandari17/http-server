@@ -95,7 +95,10 @@ int parseRequest(int sockfd, int flags, Request *req) {
   char buffer[MAX_REQUEST_BYTES];
 
   ssize_t n = recv(sockfd, buffer, sizeof(buffer), flags);
-  if (n > 0) {
+
+  if (n <= 0) {
+    return -1;
+  } else {
     char *res = memmem(buffer, (size_t)n, "\r\n\r\n", 4);
     if (res == NULL)
       return -1;
@@ -104,5 +107,6 @@ int parseRequest(int sockfd, int flags, Request *req) {
     if (parseRequestHeaders(buffer, n, req) == -1)
       return -1;
   }
+
   return 0;
 }
